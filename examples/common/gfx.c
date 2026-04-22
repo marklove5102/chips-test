@@ -424,7 +424,9 @@ void gfx_init(const gfx_desc_t* desc) {
 */
 static void apply_viewport(chips_dim_t canvas, chips_rect_t view, chips_dim_t pixel_aspect, gfx_border_t border) {
     float emu_aspect = (float)(view.width * pixel_aspect.width) / (float)(view.height * pixel_aspect.height);
-    const slbx_viewport vp = slbx_letterbox_viewport(canvas.width, canvas.height, &(slbx_letterbox_desc){
+    const int cw = canvas.width;
+    const int ch = canvas.height;
+    const slbx_viewport vp = slbx_letterbox(cw, ch, &(slbx_letterbox_desc){
         .content_aspect_ratio = emu_aspect,
         .border = {
             .left = border.left,

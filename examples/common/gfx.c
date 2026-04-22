@@ -5,6 +5,7 @@
 #include "sokol_audio.h"
 #include "sokol_log.h"
 #include "sokol_imgui.h"
+#include "sokol_letterbox.h"
 #include "sokol_glue.h"
 #include "chips/chips_common.h"
 #include "gfx.h"
@@ -422,31 +423,19 @@ void gfx_init(const gfx_desc_t* desc) {
    top, to make room at the bottom for mobile virtual keyboard
 */
 static void apply_viewport(chips_dim_t canvas, chips_rect_t view, chips_dim_t pixel_aspect, gfx_border_t border) {
-    float cw = (float) (canvas.width - border.left - border.right);
-    if (cw < 1.0f) {
-        cw = 1.0f;
-    }
-    float ch = (float) (canvas.height - border.top - border.bottom);
-    if (ch < 1.0f) {
-        ch = 1.0f;
-    }
-    const float canvas_aspect = cw / ch;
-    const chips_dim_t aspect = pixel_aspect;
-    const float emu_aspect = (float)(view.width * aspect.width) / (float)(view.height * aspect.height);
-    float vp_x, vp_y, vp_w, vp_h;
-    if (emu_aspect < canvas_aspect) {
-        vp_y = (float)border.top;
-        vp_h = ch;
-        vp_w = (ch * emu_aspect);
-        vp_x = border.left + (cw - vp_w) * 0.5f;
-    }
-    else {
-        vp_x = (float)border.left;
-        vp_w = cw;
-        vp_h = (cw / emu_aspect);
-        vp_y = border.top + (ch - vp_h) * 0.5f;
-    }
-    sg_apply_viewportf(vp_x, vp_y, vp_w, vp_h, true);
+    float emu_aspect = (float)(view.width * pixel_aspect.width) / (float)(view.height * pixel_aspect.height);
+    const int cw = canvas.width;
+    const int ch = canvas.height;
+    const slbx_viewport vp = slbx_letterbox(cw, ch, &(slbx_letterbox_desc){
+        .content_aspect_ratio = emu_aspect,
+        .border = {
+            .left = border.left,
+            .right = border.right,
+            .top = border.top,
+            .bottom = border.bottom,
+        }
+    });
+    sg_apply_viewport(vp.x, vp.y, vp.width, vp.height, true);
 }
 
 void gfx_draw(chips_display_info_t display_info) {
